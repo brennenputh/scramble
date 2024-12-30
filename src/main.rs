@@ -19,10 +19,10 @@ fn scramble_text(text: &str, original: &str, permutation: &str) -> String {
     text.to_ascii_uppercase()
         .chars()
         .map(|c| {
-            if let Some(z) = original.find(c as char) {
+            if let Some(z) = original.find(c) {
                 permutation.as_bytes()[z] as char
             } else {
-                c as char
+                c
             }
         })
         .collect::<String>()
@@ -37,8 +37,8 @@ fn main() {
     let _ = handle.read_until(26, &mut input);
 
     let translated = scramble_text(
-        String::from_utf8(input.to_ascii_uppercase())
-            .expect("Input bytes could not be decoded to ascii.")
+        String::from_utf8(input)
+            .expect("Input bytes could not be decoded to UTF-8.")
             .as_str(),
         ALPHABET,
         &permutation,
