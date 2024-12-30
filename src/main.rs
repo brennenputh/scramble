@@ -16,11 +16,15 @@ fn alphabet_permutation() -> String {
 }
 
 fn scramble_text(text: &str, original: &str, permutation: &str) -> String {
-    text.to_ascii_uppercase()
-        .chars()
+    text.chars()
         .map(|c| {
-            if let Some(z) = original.find(c) {
-                permutation.as_bytes()[z] as char
+            if let Some(z) = original.find(c.to_ascii_uppercase()) {
+                let nc = permutation.as_bytes()[z] as char;
+                if c.is_ascii_uppercase() {
+                    nc
+                } else {
+                    nc.to_ascii_lowercase()
+                }
             } else {
                 c
             }
