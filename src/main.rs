@@ -15,7 +15,7 @@ fn alphabet_permutation() -> String {
     gslice.iter().copied().collect::<String>()
 }
 
-fn scramble_text(text: &str, original: &str, permutation: &str) -> String {
+fn transliterate(text: &str, original: &str, permutation: &str) -> String {
     text.chars()
         .map(|c| {
             if let Some(z) = original.find(c.to_ascii_uppercase()) {
@@ -40,7 +40,7 @@ fn main() {
     let mut handle = stdin.lock();
     let _ = handle.read_until(26, &mut input);
 
-    let translated = scramble_text(
+    let translated = transliterate(
         String::from_utf8(input)
             .expect("Input bytes could not be decoded to UTF-8.")
             .as_str(),
@@ -48,4 +48,30 @@ fn main() {
         &permutation,
     );
     print!("{translated}");
+}
+
+#[cfg(test)]
+mod transliterate_test {
+    use super::*;
+
+    #[test]
+    fn test_equality() {
+        let original = "Test Scramble String";
+        let result = transliterate(&original, ALPHABET, ALPHABET);
+        assert_eq!(original, result);
+    }
+
+    #[test]
+    fn test_known_permutation() {
+        let original = "Test Scramble String";
+        let result = transliterate(&original, ALPHABET, "MNIFVXAEOULQYPSCKGBJDTRHWZ");
+        assert_eq!("Jvbj Bigmynqv Bjgopa", result);
+    }
+
+    #[test]
+    fn test_special_characters() {
+        let original = "Test, Scramble! String. () * @ ! *& % ^ |";
+        let result = transliterate(&original, ALPHABET, ALPHABET);
+        assert_eq!(original, result);
+    }
 }
