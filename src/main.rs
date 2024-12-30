@@ -3,7 +3,14 @@ use std::io::BufRead;
 
 use rand::seq::SliceRandom;
 use rand::thread_rng;
+use thiserror::Error;
 use unicode_segmentation::UnicodeSegmentation;
+
+#[derive(Error, Debug)]
+enum TransliterationError {
+    #[error("Parameters original and permutation cannot have different lengths!")]
+    DifferentInputLengths,
+}
 
 const ALPHABET: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -15,8 +22,17 @@ fn alphabet_permutation() -> String {
     gslice.iter().copied().collect::<String>()
 }
 
-fn transliterate(text: &str, original: &str, permutation: &str) -> String {
-    text.chars()
+fn transliterate(
+    text: &str,
+    original: &str,
+    permutation: &str,
+) -> Result<String, TransliterationError> {
+    if original.len() != permutation.len() {
+        return Err(TransliterationError::DifferentInputLengths);
+    }
+
+    Ok(text
+        .chars()
         .map(|c| {
             if let Some(z) = original.find(c.to_ascii_uppercase()) {
                 let nc = permutation.as_bytes()[z] as char;
@@ -29,7 +45,7 @@ fn transliterate(text: &str, original: &str, permutation: &str) -> String {
                 c
             }
         })
-        .collect::<String>()
+        .collect::<String>())
 }
 
 fn main() {
@@ -46,7 +62,9 @@ fn main() {
             .as_str(),
         ALPHABET,
         &permutation,
-    );
+    )
+    .unwrap(); // Unwrap justification: the permutation here is always a permutation of the
+               // alphabet.
     print!("{translated}");
 }
 
@@ -57,21 +75,28 @@ mod transliterate_test {
     #[test]
     fn test_equality() {
         let original = "Test Scramble String";
-        let result = transliterate(&original, ALPHABET, ALPHABET);
+        let result = transliterate(&original, ALPHABET, ALPHABET).unwrap();
         assert_eq!(original, result);
     }
 
     #[test]
     fn test_known_permutation() {
         let original = "Test Scramble String";
-        let result = transliterate(&original, ALPHABET, "MNIFVXAEOULQYPSCKGBJDTRHWZ");
+        let result = transliterate(&original, ALPHABET, "MNIFVXAEOULQYPSCKGBJDTRHWZ").unwrap();
         assert_eq!("Jvbj Bigmynqv Bjgopa", result);
     }
 
     #[test]
     fn test_special_characters() {
         let original = "Test, Scramble! String. () * @ ! *& % ^ |";
-        let result = transliterate(&original, ALPHABET, ALPHABET);
+        let result = transliterate(&original, ALPHABET, ALPHABET).unwrap();
         assert_eq!(original, result);
+    }
+
+    #[test]
+    fn test_different_lengths() {
+        let original = "Test, Scramble! String. () * @ ! *& % ^ |";
+        let result = transliterate(&original, ALPHABET, &ALPHABET[0..13]);
+        assert!(matches!(result.err(), Some(TransliterationError::DifferentInputLengths)));
     }
 }
